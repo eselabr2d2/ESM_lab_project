@@ -3,9 +3,9 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "trace.h"
+#include <stdint.h>
 
 static void blinky(void *pvParameters);
-
 
 int main()
 {
@@ -21,11 +21,12 @@ int main()
 static void blinky(void *pvParameters) 
 {
 	trace_init();
-
+  uint32_t delay = 100;
 	while (1) 
 	{
 		led_green_toggle();
+		led_red_toggle();
 		traces("toogle led");		//print debug message
-		vTaskDelay(500);				//delay the task for 20 ticks (1 ticks = 50 ms)
+		vTaskDelay(delay);				//delay the task for 20 ticks (1 ticks = 50 ms)
 	}
 }

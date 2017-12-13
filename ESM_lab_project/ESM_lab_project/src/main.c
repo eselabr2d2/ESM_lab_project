@@ -21,7 +21,7 @@ int main()
 static void blinky(void *pvParameters) 
 {
 	trace_init();
-  uint32_t delay = 100;
+  uint32_t delay = 500;
 	while (1) 
 	{
 		led_green_toggle();

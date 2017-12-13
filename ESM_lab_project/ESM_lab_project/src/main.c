@@ -26,6 +26,6 @@ static void blinky(void *pvParameters)
 	{
 		led_green_toggle();
 		traces("toogle led");		//print debug message
-		vTaskDelay(20);				//delay the task for 20 ticks (1 ticks = 50 ms)
+		vTaskDelay(500);				//delay the task for 20 ticks (1 ticks = 50 ms)
 	}
 }

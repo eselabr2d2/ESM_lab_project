@@ -7,11 +7,8 @@
 #include "fft.h"
 #include "motor.h"
 #include "driver.h"
+#include "search.h"
 #include <stdint.h>
-
-static void drive_robot(void *pvParameters);
-static void get_distance(void *pvParameters);
-static void tower_sensing(void *pvParameters);
 
 volatile uint32_t leftEye;
 volatile uint32_t rightEye;
@@ -19,7 +16,7 @@ volatile uint32_t rightEye;
 volatile uint16_t tower01;
 volatile uint16_t tower02;
 
-int search(){
+static void search(){
     //Call dorobo_init() function to initialize HAL, Clocks, Timers etc.
     dorobo_init();
     
@@ -27,9 +24,8 @@ int search(){
     xTaskCreate(tower_sensing, "IRTASK", 128, NULL, 1, NULL);
     xTaskCreate(drive_robot, "DRIVETASK", 128, NULL, 1, NULL);
 
-    vTaskStartScheduler();  //start the freertos scheduler
-
-    return 0;       //should not be reached!
+    vTaskStartScheduler();  //start the freeRTOS scheduler
+    //should not be reached!
 }
 
 

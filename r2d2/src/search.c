@@ -24,7 +24,7 @@ static void search(){
     xTaskCreate(tower_sensing, "IRTASK", 128, NULL, 1, NULL);
     xTaskCreate(drive_robot, "DRIVETASK", 128, NULL, 1, NULL);
 
-    vTaskStartScheduler();  //start the freeRTOS scheduler
+    vTaskStartScheduler();  //start the freertos scheduler
     //should not be reached!
 }
 
@@ -67,11 +67,11 @@ static void drive_robot(void *pvParameters){
     int8_t turnRight[] = {0,0,50};
     int8_t turnLeft[] = {0,0,-50};
   
-    uint32_t closeToObstacle = 1000;
+    uint32_t farFromObstacle = 1500;
 
     while(1){
  /*
-	    // TODO: go_straight() .. need this function
+      // TODO: go_straight() .. need this function
         if ( tower01 >= detected ) {
             // change direction such as
             // we got the strongest signal
@@ -86,13 +86,13 @@ static void drive_robot(void *pvParameters){
                 avoid_obstacle();
             }
         }
-	*/
-	  if ( leftEye < closeToObstacle )
-	      accelerator( motors, turnRight, 3);
-	  else if ( rightEye < closeToObstacle)
-		  accelerator( motors, turnLeft, 3);
-	  else
-	    accelerator( motors, go , 3);
+  */
+    if ( leftEye > farFromObstacle )
+        accelerator( motors, turnRight, 3);
+    else if ( rightEye > farFromObstacle)
+      accelerator( motors, turnLeft, 3);
+    else
+      accelerator( motors, go , 3);
     }
     
 }

@@ -10,6 +10,10 @@
 #include "search.h"
 #include <stdint.h>
 
+static void drive_robot(void *pvParameters);
+static void get_distance(void *pvParameters);
+static void tower_sensing(void *pvParameters);
+
 volatile uint32_t leftEye;
 volatile uint32_t rightEye;
 

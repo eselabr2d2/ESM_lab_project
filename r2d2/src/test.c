@@ -10,6 +10,12 @@
 #include "driver.h"
 #include "test.h"
 
+static void test_blink(void *pvParameters);
+static void test_motor(void *pvParameters);
+static void test_hit(void *pvParameters);
+static void test_distance(void *pvParameters);
+static void test_ir(void *pvParameters);
+
 void test() {
 
   xTaskCreate(test_blink, "BLINKTASK", 128, NULL, 1, NULL);

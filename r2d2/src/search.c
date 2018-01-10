@@ -44,8 +44,8 @@ static void go_to_tower(){
 static void avoid_obstacle(){
     // Turn off motors
     // TODO: turn_off();
-
-    // rotate motor until
+    
+        // rotate motor until
     // the rightEye and leftEye > noObject
     uint32_t noSafetyDistance = 2131567;
     while( leftEye < noSafetyDistance){
@@ -66,10 +66,13 @@ static void drive_robot(void *pvParameters){
     enum DM_MOTORS_E motors[] = { DM_MOTOR0, DM_MOTOR1, DM_MOTOR2 };
  
     int8_t go[] = {50,-50,0};
-    int8_t turnRight[] = {0,0,50};
-    int8_t turnLeft[] = {0,0,-50};
+    int8_t turnRight[] = {-20,20,-50};
+    int8_t turnLeft[] = {-20,20,50};
   
-    uint32_t farFromObstacle = 1500;
+    uint32_t farFromObstacle = 1000;
+    uint32_t range = 100;
+    uint8_t rotateLeft ;
+    uint8_t rotateRight ; 
 
     while(1){
  /*
@@ -89,12 +92,22 @@ static void drive_robot(void *pvParameters){
             }
         }
   */
-    if ( leftEye > farFromObstacle )
-        accelerator( motors, turnRight, 3);
-    else if ( rightEye > farFromObstacle)
-      accelerator( motors, turnLeft, 3);
-    else
-      accelerator( motors, go , 3);
+	   
+	rotateLeft = (leftEye > farFromObstacle)?1:0;
+        rotateRight = (rightEye > farFromObstacle)?1:0;
+
+        if ( rotateRight && rotateLeft) {
+		if( leftEye > rightEye )
+	             accelerator( motors, turnRight, 3);
+		else
+		     accelerator( motors, turnLeft, 3);
+	}
+        else if (rotateRight) 
+	    accelerator( motors, turnRight, 3);
+        else if (rotateLeft)
+	    accelerator( motors, turnLeft, 3);
+	else
+            accelerator( motors, go , 3);
     }
     
 }
@@ -104,7 +117,9 @@ static void get_distance(void *pvParameters) {
 
   while (1) {
     leftEye  = adc_get_value(DA_ADC_CHANNEL0);
+    vTaskDelay(20);
     rightEye  = adc_get_value(DA_ADC_CHANNEL1);
+    vTaskDelay(20);
   }
 }
 

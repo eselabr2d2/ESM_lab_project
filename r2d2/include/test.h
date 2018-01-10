@@ -9,7 +9,7 @@
 #ifndef INCLUDE_TEST_H_
 #define INCLUDE_TEST_H_
 
-static void test();
+void test();
 static void test_blink(void *pvParameters);
 static void test_motor(void *pvParameters);
 static void test_hit(void *pvParameters);

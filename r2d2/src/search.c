@@ -16,15 +16,13 @@ volatile uint32_t rightEye;
 volatile uint16_t tower01;
 volatile uint16_t tower02;
 
-static void search(){
-    //Call dorobo_init() function to initialize HAL, Clocks, Timers etc.
-    dorobo_init();
+void search(){
     
     xTaskCreate(get_distance, "ADCTASK", 128, NULL, 1, NULL);
     xTaskCreate(tower_sensing, "IRTASK", 128, NULL, 1, NULL);
     xTaskCreate(drive_robot, "DRIVETASK", 128, NULL, 1, NULL);
 
-    vTaskStartScheduler();  //start the freertos scheduler
+    vTaskStartScheduler();  //start the freeRTOS scheduler
     //should not be reached!
 }
 

@@ -1,5 +1,7 @@
-#include "test.c"
-#include "search.c"
+#include "test.h"
+#include "search.h"
+#include "digital.h"
+#include "dorobo32.h"
 
 int main (){
   //Call dorobo_init() function to initialize HAL, Clocks, Timers etc.
@@ -13,4 +15,5 @@ int main (){
   {
     search();
   }
+  return 0;
 }

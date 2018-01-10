@@ -10,7 +10,7 @@
 #include "driver.h"
 #include "test.h"
 
-static void test() {
+void test() {
 
   xTaskCreate(test_blink, "BLINKTASK", 128, NULL, 1, NULL);
   xTaskCreate(test_motor, "MOTORTASK", 128, NULL, 1, NULL);
@@ -18,7 +18,7 @@ static void test() {
   xTaskCreate(test_distance, "TASK", 128, NULL, 1, NULL);
   xTaskCreate(test_ir, "IRTASK", 128, NULL, 1, NULL);
 
-  vTaskStartScheduler();  //start the freertos scheduler
+  vTaskStartScheduler();  //start the freeRTOS scheduler
   //should not be reached!
 }
 

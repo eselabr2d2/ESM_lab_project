@@ -9,89 +9,90 @@
 #include "driver.h"
 #include <stdint.h>
 
-static void blinky(void *pvParameters);
-static void adc_tester(void *pvParameters);
-static void ir_tester(void *pvParameters);
+static void drive_robot(void *pvParameters);
+static void get_distance(void *pvParameters);
+static void tower_sensing(void *pvParameters);
 
-int main()
-{
-  dorobo_init();      //Call dorobo_init() function to initialize HAL, Clocks, Timers etc.
+volatile uint32_t distance01;
+volatile uint32_t distance02;
+
+volatile uint16_t tower01;
+volatile uint16_t tower02;
+
+int main(){
+    //Call dorobo_init() function to initialize HAL, Clocks, Timers etc.
+    dorobo_init();       
     
-  xTaskCreate(blinky, "BLINKYTASK", 128, NULL, 2, NULL);  //create microswitches tester task
-  xTaskCreate(adc_tester, "ADCTASK", 128, NULL, 1, NULL); //  creat adc tester task
-  xTaskCreate(ir_tester, "IRTASK", 216, NULL, 2, NULL);
+    xTaskCreate(get_distance, "ADCTASK", 128, NULL, 1, NULL); 
+    xTaskCreate(tower_sensing, "IRTASK", 128, NULL, 1, NULL);
+    xTaskCreate(drive_robot, "DRIVETASK", 128, NULL, 1, NULL);
+   
+    vTaskStartScheduler();  //start the freertos scheduler
 
-  vTaskStartScheduler();  //start the freertos scheduler
-
-  return 0;       //should not be reached!
+    return 0;       //should not be reached!
 }
 
-static void blinky(void *pvParameters) {
 
-  // microswitch tester
-  digital_configure_pin( DD_PIN_PC13, DD_CFG_INPUT_PULLUP);
-  digital_configure_pin( DD_PIN_PA8, DD_CFG_INPUT_PULLUP);
-
-  DD_PINLEVEL_T sw01, sw02 ;
-
-  enum DM_MOTORS_E motors[] =  {DM_MOTOR0};
-   int8_t speeds[] = {95};
-   int8_t steps[] = {5};
-   int a_size = 1;
-   TickType_t a_delay= 20;
-   for(int i = 0; i < 2; i++)
-     {
-       motor_acc(motors, speeds, steps, a_size, a_delay);
-       vTaskDelay(200);
-       speeds[0] = -80;
-       motor_acc(motors, speeds, steps, a_size, a_delay);
-       vTaskDelay(200);
-       speeds[0] = 0;
-       motor_acc(motors, speeds, steps, a_size, a_delay);
-       speeds[0] = 90;
-     }
-
-  uint32_t delay = 200;
-  while (1) {
-    traces("Task 1");
-    sw01 = digital_get_pin(DD_PIN_PC13);
-    sw02 = digital_get_pin(DD_PIN_PA8);
-
-    if (sw01 == DD_LEVEL_HIGH )
-      led_red_toggle();
-    if (sw02 == DD_LEVEL_HIGH)
-      led_green_toggle();
-
-    vTaskDelay(delay);        //delay the task for 20 ticks (1 ticks = 50 ms)
-  }
+static void go_to_tower(){
+    // Turn off motors
+    // TODO: turn_off();
+    uint16_t threshold = 11314; 
+    // rotate motor until we got the strongest signal
+    while( tower02 < threshold){
+       // TODO: rotate();
+    }
 }
 
-static void adc_tester(void *pvParameters) {
+static void avoid_obstacle(){
+    // Turn off motors
+    // TODO: turn_off();
 
-  // adc tester
-  trace_init();
+    // rotate motor until
+    // the distance02 and distance01 > noObject
+    uint32_t noSafetyDistance = 2131567;
+    while( distance01 < noSafetyDistance){
+        // TODO: rotate()
+    }
+
+}
+
+static void drive_robot(void *pvParameters){
+    /* some number , we need to calibrate in order to get 
+       the right number
+       */
+
+    uint32_t secure_distance = 15165156; 
+    uint32_t detected = 1121; // some numebre 
+    while(1){ 
+        // TODO: go_straight() .. need this function
+        if ( tower01 >= detected ) {
+            // change direction such as 
+            // we got the strongest signal
+            go_to_tower();
+        }
+        else {
+            // if d01 < thrs means that 
+            // there is an obstacle in front
+            if (distance01 < secure_distance){
+                // so far avoid obstacle is
+                // just changing direction
+                avoid_obstacle();
+            }
+        }
+    }
+}
+
+static void get_distance(void *pvParameters) {
   adc_init();
 
-  uint32_t left, right ;
-  uint32_t delay = 200;
-
   while (1) {
-    traces("Task 2");
-    left  = adc_get_value(DA_ADC_CHANNEL0);
-    right   = adc_get_value(DA_ADC_CHANNEL8);
-
-    tracef("L = %i\n", left);
-    vTaskDelay(delay);        //delay the task for 20 ticks (1 ticks = 50 ms)
-  //  tracef("R = %i\n", right);
-  //  vTaskDelay(delay);        //delay the task for 20 ticks (1 ticks = 50 ms)
+    distance01  = adc_get_value(DA_ADC_CHANNEL0);
+    distance02  = adc_get_value(DA_ADC_CHANNEL8);
   }
 }
 
-static void ir_tester(void *pvParameters){
 
-  trace_init();
-  uint32_t delay = 100;
-  uint16_t fft01, fft02;
+static void tower_sensing(void *pvParameters){
   digital_configure_pin( DD_PIN_PA15, DD_CFG_INPUT_NOPULL );
 
   // Not necessary
@@ -100,10 +101,8 @@ static void ir_tester(void *pvParameters){
     ft_start_sampling(DD_PIN_PA15);
     while (!ft_is_sampling_finished) {}
 
-    fft01 = ft_get_transform (DFT_FREQ125);
-    fft02 = ft_get_transform (DFT_FREQ100);
-    tracef("freq125  %i \t freq100 %i \n", fft01, fft02);
-    vTaskDelay(delay);        //delay the task for 20 ticks (1 ticks = 50 ms)
+    tower01 = ft_get_transform (DFT_FREQ125);
+    tower02 = ft_get_transform (DFT_FREQ100);
   }
 
 }

@@ -19,7 +19,7 @@ volatile uint32_t rightEye;
 volatile uint16_t tower01;
 volatile uint16_t tower02;
 
-int search(){
+int search_target(){
     //Call dorobo_init() function to initialize HAL, Clocks, Timers etc.
     dorobo_init();
     
@@ -71,7 +71,7 @@ static void drive_robot(void *pvParameters){
     int8_t turnRight[] = {0,0,50};
     int8_t turnLeft[] = {0,0,-50};
   
-    uint32_t closeToObstacle = 1000;
+    uint32_t farFromObstacle = 1500;
 
     while(1){
  /*
@@ -91,9 +91,9 @@ static void drive_robot(void *pvParameters){
             }
         }
 	*/
-	  if ( leftEye < closeToObstacle )
+	  if ( leftEye > farFromObstacle )
 	      accelerator( motors, turnRight, 3);
-	  else if ( rightEye < closeToObstacle)
+	  else if ( rightEye > farFromObstacle)
 		  accelerator( motors, turnLeft, 3);
 	  else
 	    accelerator( motors, go , 3);

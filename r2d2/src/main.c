@@ -1,6 +1,6 @@
-#include "search.c"
+#include "search.h"
 
 
 int main (){
-	search();
+	search_target();
 }

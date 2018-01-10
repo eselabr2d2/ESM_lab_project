@@ -70,7 +70,6 @@ static void drive_robot(void *pvParameters){
     int8_t turnLeft[] = {-20,20,50};
   
     uint32_t farFromObstacle = 1000;
-    uint32_t range = 100;
     uint8_t rotateLeft ;
     uint8_t rotateRight ; 
 
@@ -98,9 +97,15 @@ static void drive_robot(void *pvParameters){
 
         if ( rotateRight && rotateLeft) {
 		if( leftEye > rightEye )
-	             accelerator( motors, turnRight, 3);
+			while( rotateLeft){
+		             accelerator( motors, turnLeft, 3);
+			     rotateLeft = (leftEye > farFromObstacle)?1:0; 
+			}
 		else
-		     accelerator( motors, turnLeft, 3);
+			while( rotateRight){
+		     		accelerator( motors, turnRight, 3);
+				rotateRight = (rightEye > farFromObstacle)?1:0;
+			}
 	}
         else if (rotateRight) 
 	    accelerator( motors, turnRight, 3);

@@ -13,8 +13,8 @@ static void drive_robot(void *pvParameters);
 static void get_distance(void *pvParameters);
 static void tower_sensing(void *pvParameters);
 
-volatile uint32_t distance01;
-volatile uint32_t distance02;
+volatile uint32_t leftEye;
+volatile uint32_t rightEye;
 
 volatile uint16_t tower01;
 volatile uint16_t tower02;
@@ -48,9 +48,9 @@ static void avoid_obstacle(){
     // TODO: turn_off();
 
     // rotate motor until
-    // the distance02 and distance01 > noObject
+    // the rightEye and leftEye > noObject
     uint32_t noSafetyDistance = 2131567;
-    while( distance01 < noSafetyDistance){
+    while( leftEye < noSafetyDistance){
         // TODO: rotate()
     }
 
@@ -63,8 +63,15 @@ static void drive_robot(void *pvParameters){
 
     uint32_t secure_distance = 15165156;
     uint32_t detected = 1121; // some numebre
+
+    // L, R, B
+    enum DM_MOTORS_E motors[] = { DM_MOTOR0, DM_MOTOR1, DM_MOTOR2 };
+ 
+    int8_t go[] = {50,-50,0};
+    int8_t scape[] = {20,20,20};
     while(1){
-        // TODO: go_straight() .. need this function
+ /*
+	    // TODO: go_straight() .. need this function
         if ( tower01 >= detected ) {
             // change direction such as
             // we got the strongest signal
@@ -73,21 +80,27 @@ static void drive_robot(void *pvParameters){
         else {
             // if d01 < thrs means that
             // there is an obstacle in front
-            if (distance01 < secure_distance){
+            if (leftEye < secure_distance){
                 // so far avoid obstacle is
                 // just changing direction
                 avoid_obstacle();
             }
         }
+	*/
+	  if ( tower01 > 100 )
+	      accelerator( motors, scape, 3);
+	  else
+	    accelerator( motors, go , 3);
     }
+    
 }
 
 static void get_distance(void *pvParameters) {
   adc_init();
 
   while (1) {
-    distance01  = adc_get_value(DA_ADC_CHANNEL0);
-    distance02  = adc_get_value(DA_ADC_CHANNEL8);
+    leftEye  = adc_get_value(DA_ADC_CHANNEL0);
+    rightEye  = adc_get_value(DA_ADC_CHANNEL8);
   }
 }
 

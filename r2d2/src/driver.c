@@ -4,7 +4,11 @@
 #include "FreeRTOS.h"
 #include "task.h"
 
-void motor_acc(enum DM_MOTORS_E motor[], int8_t aim_speed[], int8_t step[], int8_t size, TickType_t delay)
+
+#define STEP 5
+#define STEP_DELAY 20
+
+void accelerator(enum DM_MOTORS_E motor[], int8_t aim_speed[], int8_t size)
 {
   int speed_diff[size];
   int speed[size];
@@ -23,25 +27,25 @@ void motor_acc(enum DM_MOTORS_E motor[], int8_t aim_speed[], int8_t step[], int8
     {
       if (speed_diff[i] != 0)
       {
-        if (abs(speed_diff[i]) <= step[i])
+        if (abs(speed_diff[i]) <= STEP)
         {
           motor_set(motor[i], aim_speed[i]);
           speed_diff[i] = 0;
         }
         else if (speed_diff[i] > 0)
         {
-          motor_set(motor[i], speed[i] + step[i]);
-          speed_diff[i] = speed_diff[i] - step[i];
+          motor_set(motor[i], speed[i] + STEP);
+          speed_diff[i] = speed_diff[i] - STEP;
         }
         else
         {
-          motor_set(motor[i], speed[i] - step[i]);
-          speed_diff[i] = speed_diff[i] + step[i];
+          motor_set(motor[i], speed[i] - STEP);
+          speed_diff[i] = speed_diff[i] + STEP;
         }
         speed[i] = aim_speed[i] - speed_diff[i];
         any_diff = any_diff || (speed_diff[i] != 0);
       }
     }
-    vTaskDelay(delay);
+    vTaskDelay(STEP_DELAY);
   }
 }

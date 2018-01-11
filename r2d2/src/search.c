@@ -11,7 +11,8 @@
 #include <stdint.h>
 
 #define OBSTACLE_THR 1000
-#define obstacleDetected(X) (x >= OBSTACLE_THR)?1:0; 
+#define obstacleDetected(X) ((X >= OBSTACLE_THR)?1:0)
+
 #define ROTATE_LEFT                     \
     while( obstacleDetected(leftEye))   \
         accelerator(motors, turnLeft, 3);
@@ -108,19 +109,19 @@ static void drive_robot(void *pvParameters){
         accelerator(motors, go, 3);
 
         /** OBSTACLE AVOIDANCE **/
-	rotateLeft = obstacleDetected(leftEye);
+        rotateLeft = obstacleDetected(leftEye);
         rotateRight = obstacleDetected(rightEye);
 
         /* if both sensor are detecting something near*/
         if ( rotateRight && rotateLeft) {
-            if( leftWall == 1) 
-                ROTATE_LEFT; 
-            else if( rightWall == 1) 
-                ROTATE_RIGHT; 
-            else if( leftEye >=rightEye) 
-                ROTATE_LEFT;
-            else ROTATE_RIGHT; 
-	}
+            if( leftWall == 1) {
+                ROTATE_LEFT; }
+            else if( rightWall == 1){
+                ROTATE_RIGHT; }
+            else if( leftEye >=rightEye){
+                ROTATE_LEFT;}
+            else ROTATE_RIGHT;
+        }
         /* if just one of the sensors detect something*/ 
         if (rotateRight)    ROTATE_RIGHT; 
         if (rotateLeft)     ROTATE_LEFT;

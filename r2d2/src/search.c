@@ -77,10 +77,12 @@ static void drive_robot(void *pvParameters){
 
     // L, R, B
     enum DM_MOTORS_E motors[] = { DM_MOTOR0, DM_MOTOR1, DM_MOTOR2 };
- 
+
+   // TODO: find the speed that allow a good rotation
+   //       no obstacle detection for none of the sensors 
     int8_t go[] = {50,-50,0};
-    int8_t turnRight[] = {-20,20,-50};
-    int8_t turnLeft[] = {-20,20,50};
+    int8_t turnRight[] = {-50,50,-50};
+    int8_t turnLeft[] = {-50,50,50};
   
     uint8_t rotateLeft ;
     uint8_t rotateRight ; 

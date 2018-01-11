@@ -10,9 +10,20 @@
 #include "search.h"
 #include <stdint.h>
 
+#define OBSTACLE_THR 1000
+#define obstacleDetected(X) (x >= OBSTACLE_THR)?1:0; 
+#define ROTATE_LEFT                     \
+    while( obstacleDetected(leftEye))   \
+        accelerator(motors, turnLeft, 3);
+
+#define ROTATE_RIGHT                    \
+    while( obstacleDetected(rightEye))  \
+        accelerator(motors, turnRight, 3);
+ 
 static void drive_robot(void *pvParameters);
 static void get_distance(void *pvParameters);
 static void tower_sensing(void *pvParameters);
+static void sense_laterals(void *pvParameters);
 
 volatile uint32_t leftEye;
 volatile uint32_t rightEye;
@@ -20,10 +31,14 @@ volatile uint32_t rightEye;
 volatile uint16_t tower01;
 volatile uint16_t tower02;
 
+volatile DD_PINLEVEL_T leftWall;
+volatile DD_PINLEVEL_T rightWall;
+
 void search(){
     
-    xTaskCreate(get_distance, "ADCTASK", 128, NULL, 1, NULL);
+    xTaskCreate(get_distance, "ADCTASK", 32, NULL, 1, NULL);
     xTaskCreate(tower_sensing, "IRTASK", 128, NULL, 1, NULL);
+    xTaskCreate(sense_laterals, "SWITCHESTASK", 32, NULL, 2, NULL);
     xTaskCreate(drive_robot, "DRIVETASK", 128, NULL, 1, NULL);
 
     vTaskStartScheduler();  //start the freeRTOS scheduler
@@ -58,8 +73,6 @@ static void drive_robot(void *pvParameters){
     /* some number , we need to calibrate in order to get
        the right number
        */
-
-    uint32_t secure_distance = 15165156;
     uint32_t detected = 1121; // some numebre
 
     // L, R, B
@@ -69,7 +82,6 @@ static void drive_robot(void *pvParameters){
     int8_t turnRight[] = {-20,20,-50};
     int8_t turnLeft[] = {-20,20,50};
   
-    uint32_t farFromObstacle = 1000;
     uint8_t rotateLeft ;
     uint8_t rotateRight ; 
 
@@ -91,28 +103,25 @@ static void drive_robot(void *pvParameters){
             }
         }
   */
-	   
-	rotateLeft = (leftEye > farFromObstacle)?1:0;
-        rotateRight = (rightEye > farFromObstacle)?1:0;
+        accelerator(motors, go, 3);
 
+        /** OBSTACLE AVOIDANCE **/
+	rotateLeft = obstacleDetected(leftEye);
+        rotateRight = obstacleDetected(rightEye);
+
+        /* if both sensor are detecting something near*/
         if ( rotateRight && rotateLeft) {
-		if( leftEye > rightEye )
-			while( rotateLeft){
-		             accelerator( motors, turnLeft, 3);
-			     rotateLeft = (leftEye > farFromObstacle)?1:0; 
-			}
-		else
-			while( rotateRight){
-		     		accelerator( motors, turnRight, 3);
-				rotateRight = (rightEye > farFromObstacle)?1:0;
-			}
+            if( leftWall == 1) 
+                ROTATE_LEFT; 
+            else if( rightWall == 1) 
+                ROTATE_RIGHT; 
+            else if( leftEye >=rightEye) 
+                ROTATE_LEFT;
+            else ROTATE_RIGHT; 
 	}
-        else if (rotateRight) 
-	    accelerator( motors, turnRight, 3);
-        else if (rotateLeft)
-	    accelerator( motors, turnLeft, 3);
-	else
-            accelerator( motors, go , 3);
+        /* if just one of the sensors detect something*/ 
+        if (rotateRight)    ROTATE_RIGHT; 
+        if (rotateLeft)     ROTATE_LEFT;
     }
     
 }
@@ -143,3 +152,20 @@ static void tower_sensing(void *pvParameters){
   }
 
 }
+
+static void sense_laterals(void *pvParameters) {
+
+  //Micro switches
+  digital_configure_pin( DD_PIN_PC13, DD_CFG_INPUT_PULLUP);
+  digital_configure_pin( DD_PIN_PA8, DD_CFG_INPUT_PULLUP);
+
+  while (1) {
+    leftWall  = digital_get_pin(DD_PIN_PC13);
+    rightWall = digital_get_pin(DD_PIN_PA8);
+
+    vTaskDelay(20);
+   }
+
+}
+
+

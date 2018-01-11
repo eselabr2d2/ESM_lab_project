@@ -1,8 +1,8 @@
 /*
  * search.h
  *
- *  Created on: 10 de jan de 2018
- *      Author: Pedro
+ *   Functions for searching the tower
+ *      Authors: Group 10
  */
 
 #ifndef INCLUDE_SEARCH_H_

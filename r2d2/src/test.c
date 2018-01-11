@@ -51,11 +51,11 @@ static void test_motor(void *pvParameters) {
   while(1)
   {
     int8_t speeds[] = {90, -90};
-    accelerator(motors, speeds, array_size);
+    accelerator(motors, speeds, array_size, false);
     vTaskDelay(200);
     speeds[0] = -90;
     speeds[1] = 90;
-    accelerator(motors, speeds, array_size);
+    accelerator(motors, speeds, array_size, false);
 
     vTaskDelay(200);
   }

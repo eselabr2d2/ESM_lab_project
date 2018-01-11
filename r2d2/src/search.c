@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdbool.h>
 #include "dorobo32.h"
 #include "FreeRTOS.h"
 #include "task.h"
@@ -15,11 +16,11 @@
 
 #define ROTATE_LEFT                     \
     while( obstacleDetected(leftEye))   \
-        accelerator(motors, turnLeft, 3);
+        accelerator(motors, turnLeft, 3, false);
 
 #define ROTATE_RIGHT                    \
     while( obstacleDetected(rightEye))  \
-        accelerator(motors, turnRight, 3);
+        accelerator(motors, turnRight, 3, false);
  
 static void drive_robot(void *pvParameters);
 static void get_distance(void *pvParameters);
@@ -106,7 +107,7 @@ static void drive_robot(void *pvParameters){
             }
         }
   */
-        accelerator(motors, go, 3);
+        accelerator(motors, go, 3, false);
 
         /** OBSTACLE AVOIDANCE **/
         rotateLeft = obstacleDetected(leftEye);

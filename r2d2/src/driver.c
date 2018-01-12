@@ -4,15 +4,19 @@
 #include "FreeRTOS.h"
 #include "task.h"
 
+// TODO: Check the step and its delay.
 #define STEP 5
-#define STEP_DELAY 20
+#define STEP_DELAY 10
 
+// TODO: Check the cancel parameter.
+// Function to change the speed of the three motors.
 void accelerator3(int8_t aim_speed[], _Bool *cancel)
 {
   enum DM_MOTORS_E motors[] = { DM_MOTOR0, DM_MOTOR1, DM_MOTOR2 };
   accelerator(motors, aim_speed, 3, cancel);
 }
 
+//Function to change the speed of the motors depending on the size of the array.
 void accelerator(enum DM_MOTORS_E motor[], int8_t aim_speed[], int8_t size, _Bool *cancel)
 {
   int speed_diff[size];

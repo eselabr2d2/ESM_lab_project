@@ -48,9 +48,21 @@ static void test_motor(void *pvParameters) {
 
   enum DM_MOTORS_E motors[] =  {DM_MOTOR0, DM_MOTOR1};
   int array_size = 2;
+  int8_t speeds[] = {0, 0};
   while(1)
   {
-    int8_t speeds[] = {90, -90};
+    // If DIP switch 4 is on after reset, the motors are stopped.
+    if (digital_get_dip(DD_DIP4) == DD_DIP_ON) {
+        speeds[0] = 0;
+        speeds[1] = 0;
+        accelerator(motors, speeds, array_size, false);
+        while (digital_get_dip(DD_DIP4) == DD_DIP_ON) {
+          vTaskDelay(200);
+        }
+    }
+
+    speeds[0] = 90;
+    speeds[1] = -90;
     accelerator(motors, speeds, array_size, false);
     vTaskDelay(200);
     speeds[0] = -90;

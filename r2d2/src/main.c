@@ -7,8 +7,8 @@ int main (){
   //Call dorobo_init() function to initialize HAL, Clocks, Timers etc.
   dorobo_init();
 
-  DD_DIP_STATE_T test_mode = digital_get_dip(DD_DIP1);
-  if (test_mode == DD_DIP_ON) {
+  // If DIP switch 1 is ON after reset, the robot is set to test mode.
+  if (digital_get_dip(DD_DIP1) == DD_DIP_ON) {
     test();
   }
   else

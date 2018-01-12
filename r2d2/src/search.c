@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdint.h>
 #include <stdbool.h>
 #include "dorobo32.h"
 #include "FreeRTOS.h"
@@ -9,167 +10,203 @@
 #include "motor.h"
 #include "driver.h"
 #include "search.h"
-#include <stdint.h>
 
-#define OBSTACLE_THR 1000
-#define obstacleDetected(X) ((X >= OBSTACLE_THR)?1:0)
+// TODO: Refine the threshold.
+#define DIST_THR 1100
 
-#define ROTATE_LEFT                     \
-    while( obstacleDetected(leftEye))   \
-        accelerator(motors, turnLeft, 3, false);
+static void control_motors(void *pvParameters);
+static void watch_hit(void *pvParameters);
+static void watch_distance(void *pvParameters);
+static void watch_tower(void *pvParameters);
 
-#define ROTATE_RIGHT                    \
-    while( obstacleDetected(rightEye))  \
-        accelerator(motors, turnRight, 3, false);
- 
-static void drive_robot(void *pvParameters);
-static void get_distance(void *pvParameters);
-static void tower_sensing(void *pvParameters);
-static void sense_laterals(void *pvParameters);
+enum SENSOR_STATUS
+{
+  SENSOR_NONE,
+  SENSOR_LEFT,
+  SENSOR_RIGHT,
+  SENSOR_BOTH
+};
 
-volatile uint32_t leftEye;
-volatile uint32_t rightEye;
-
-volatile uint16_t tower01;
-volatile uint16_t tower02;
-
-volatile DD_PINLEVEL_T leftWall;
-volatile DD_PINLEVEL_T rightWall;
+volatile enum SENSOR_STATUS hit_status;
+volatile enum SENSOR_STATUS dist_status;
+volatile enum SENSOR_STATUS tower_status;
+volatile _Bool cancel_acc;
 
 void search(){
-    
-    xTaskCreate(get_distance, "ADCTASK", 32, NULL, 1, NULL);
-    xTaskCreate(tower_sensing, "IRTASK", 128, NULL, 1, NULL);
-    xTaskCreate(sense_laterals, "SWITCHESTASK", 32, NULL, 2, NULL);
-    xTaskCreate(drive_robot, "DRIVETASK", 128, NULL, 1, NULL);
 
-    vTaskStartScheduler();  //start the freeRTOS scheduler
-    //should not be reached!
+  xTaskCreate(control_motors, "CONTROLMOTORS", 128, NULL, 1, NULL);
+  xTaskCreate(watch_hit, "WATCHHIT", 128, NULL, 1, NULL);
+  xTaskCreate(watch_distance, "WATCHDIST", 128, NULL, 1, NULL);
+  xTaskCreate(watch_tower, "WATCHTOWER", 128, NULL, 1, NULL);
+
+  vTaskStartScheduler();  //Start the freeRTOS scheduler.
+  //should not be reached!
 }
 
+static void control_motors(void *pvParameters){
 
-static void go_to_tower(){
-    // Turn off motors
-    // TODO: turn_off();
-    uint16_t threshold = 11314;
-    // rotate motor until we got the strongest signal
-    while( tower02 < threshold){
-       // TODO: rotate();
+  //The order of the motors is: DM_MOTOR0 as left motor,
+  //DM_MOTOR1 as right motor and DM_MOTOR2 as back motor.
+
+  // TODO: Increase velocity.
+  int8_t drive_fwd[] = {60,-60,0};
+  int8_t drive_fwd_left[] = {30,-60,-30};
+  int8_t drive_fwd_right[] = {60,-30,30};
+
+  int8_t drive_fwd_left_slow[] = {10,-30,-10};
+  int8_t drive_fwd_right_slow[] = {30,-10,10};
+
+  int8_t drive_bwd[] = {-60,60,0};
+  //TODO: Check the lateral hit behavior.
+  int8_t drive_bwd_left[] = {-30,60,30};
+  int8_t drive_bwd_right[] = {-60,30,-30};
+
+  while(true){
+
+    // If DIP switch 4 is on after reset, the motors are stopped.
+    if (digital_get_dip(DD_DIP4) == DD_DIP_ON) {
+      int8_t drive_stop[] = {0, 0, 0};
+      accelerator3(drive_stop, false);
+      while (digital_get_dip(DD_DIP4) == DD_DIP_ON) {
+       vTaskDelay(200);
+      }
     }
-}
 
-static void avoid_obstacle(){
-    // Turn off motors
-    // TODO: turn_off();
-    
-        // rotate motor until
-    // the rightEye and leftEye > noObject
-    uint32_t noSafetyDistance = 2131567;
-    while( leftEye < noSafetyDistance){
-        // TODO: rotate()
+    // Control HIT behavior first.
+    if (hit_status != SENSOR_NONE)
+    {
+      if(hit_status == SENSOR_LEFT)
+      {
+        accelerator3(drive_bwd_left, false);
+      }
+      else if (hit_status == SENSOR_RIGHT)
+      {
+        accelerator3(drive_bwd_left, false);
+      }
+      else if (hit_status == SENSOR_BOTH)
+      {
+        accelerator3(drive_bwd, false);
+      }
+      // Time to go back far enough to get rid of the obstacle.
+      // TODO: Check this delay.
+      vTaskDelay(100);
     }
-
-}
-
-static void drive_robot(void *pvParameters){
-    /* some number , we need to calibrate in order to get
-       the right number
-       */
-    uint32_t detected = 1121; // some numebre
-
-    // L, R, B
-    enum DM_MOTORS_E motors[] = { DM_MOTOR0, DM_MOTOR1, DM_MOTOR2 };
-
-   // TODO: find the speed that allow a good rotation
-   //       no obstacle detection for none of the sensors 
-    int8_t go[] = {50,-50,0};
-    int8_t turnRight[] = {-50,50,-50};
-    int8_t turnLeft[] = {-50,50,50};
-  
-    uint8_t rotateLeft ;
-    uint8_t rotateRight ; 
-
-    while(1){
- /*
-      // TODO: go_straight() .. need this function
-        if ( tower01 >= detected ) {
-            // change direction such as
-            // we got the strongest signal
-            go_to_tower();
-        }
-        else {
-            // if d01 < thrs means that
-            // there is an obstacle in front
-            if (leftEye < secure_distance){
-                // so far avoid obstacle is
-                // just changing direction
-                avoid_obstacle();
-            }
-        }
-  */
-        accelerator(motors, go, 3, false);
-
-        /** OBSTACLE AVOIDANCE **/
-        rotateLeft = obstacleDetected(leftEye);
-        rotateRight = obstacleDetected(rightEye);
-
-        /* if both sensor are detecting something near*/
-        if ( rotateRight && rotateLeft) {
-            if( leftWall == 1) {
-                ROTATE_LEFT; }
-            else if( rightWall == 1){
-                ROTATE_RIGHT; }
-            else if( leftEye >=rightEye){
-                ROTATE_LEFT;}
-            else ROTATE_RIGHT;
-        }
-        /* if just one of the sensors detect something*/ 
-        if (rotateRight)    ROTATE_RIGHT; 
-        if (rotateLeft)     ROTATE_LEFT;
+    else if (dist_status == SENSOR_LEFT) // Control safe distance.
+    {
+      accelerator3(drive_fwd_right_slow, (_Bool*)&cancel_acc);
     }
-    
-}
-
-static void get_distance(void *pvParameters) {
-  adc_init();
-
-  while (1) {
-    leftEye  = adc_get_value(DA_ADC_CHANNEL0);
-    vTaskDelay(20);
-    rightEye  = adc_get_value(DA_ADC_CHANNEL1);
-    vTaskDelay(20);
+    else if (dist_status == SENSOR_RIGHT)
+    {
+      accelerator3(drive_fwd_left_slow, (_Bool*)&cancel_acc);
+    }
+    else if (tower_status == SENSOR_LEFT) // Control TOWER target.
+    {
+      accelerator3(drive_fwd_left, (_Bool*)&cancel_acc);
+    }
+    else if (tower_status == SENSOR_RIGHT)
+    {
+      accelerator3(drive_fwd_right, (_Bool*)&cancel_acc);
+    }
+    else {
+      accelerator3(drive_fwd, (_Bool*)&cancel_acc);
+    }
   }
 }
 
+static void watch_hit(void *pvParameters) {
 
-static void tower_sensing(void *pvParameters){
-  digital_configure_pin( DD_PIN_PA15, DD_CFG_INPUT_NOPULL );
-
-  // Not necessary
-  //ft_init();
-  while (1){
-    ft_start_sampling(DD_PIN_PA15);
-    while (!ft_is_sampling_finished) {}
-
-    tower01 = ft_get_transform (DFT_FREQ125);
-    tower02 = ft_get_transform (DFT_FREQ100);
-  }
-
-}
-
-static void sense_laterals(void *pvParameters) {
-
-  //Micro switches
   digital_configure_pin( DD_PIN_PC13, DD_CFG_INPUT_PULLUP);
   digital_configure_pin( DD_PIN_PA8, DD_CFG_INPUT_PULLUP);
 
-  while (1) {
-    leftWall  = digital_get_pin(DD_PIN_PC13);
-    rightWall = digital_get_pin(DD_PIN_PA8);
+  _Bool hit_left, hit_right;
 
-    vTaskDelay(20);
-   }
+  //If hit only one side, still checking the other side another time.
+  while (true) {
+    for (uint8_t i=0; i<2 || (hit_left && hit_right); i++) {
+      hit_left  |= !digital_get_pin(DD_PIN_PC13);
+      hit_right |= !digital_get_pin(DD_PIN_PA8);
+      // TODO: Check this delay .
+      vTaskDelay(10);
+    }
+    if (hit_left && hit_right) {
+      hit_status = SENSOR_BOTH;
+    }
+    else if (hit_left) {
+      hit_status = SENSOR_LEFT;
+    }
+    else if (hit_right) {
+      hit_status = SENSOR_RIGHT;
+    }
+    else {
+      hit_status = SENSOR_NONE;
+    }
 
+    cancel_acc = (hit_status == SENSOR_NONE) ? 0 : 1;
+    vTaskDelay(10);
+    hit_left = false;
+    hit_right = false;
+  }
 }
 
+static void watch_distance(void *pvParameters) {
 
+  uint32_t dist_left, dist_right;
+
+  while (true) {
+    // TODO: Check if there are values out of the average
+    // If yes a "for loop" would solve the issue.
+      dist_left  = adc_get_value(DA_ADC_CHANNEL0);
+      dist_right = adc_get_value(DA_ADC_CHANNEL1);
+
+    //For simplification: If both sensors surpass the threshold,
+    //the left sensor has priority.
+    if (dist_left > DIST_THR) {
+      dist_status = SENSOR_LEFT;
+    }
+    else if (dist_right > DIST_THR) {
+      dist_status = SENSOR_RIGHT;
+    }
+    else {
+      dist_status = SENSOR_NONE;
+    }
+
+    vTaskDelay(10);
+  }
+}
+
+static void watch_tower(void *pvParameters){
+
+  // TODO: Change the names for the similar variables in test.c
+  uint16_t ir_left, ir_right;
+
+  digital_configure_pin(DD_PIN_PA15, DD_CFG_INPUT_NOPULL);
+  digital_configure_pin(DD_PIN_PF10, DD_CFG_INPUT_NOPULL);
+
+  while (true){
+    ft_start_sampling(DD_PIN_PA15);
+      while (!ft_is_sampling_finished());
+      ir_left = ft_get_transform (DFT_FREQ100);
+
+      ft_start_sampling(DD_PIN_PF10);
+      while (!ft_is_sampling_finished());
+      ir_right = ft_get_transform (DFT_FREQ100);
+
+    if (ir_left==0 && ir_right==0) {
+      tower_status = SENSOR_NONE;
+    }
+    // TODO: Check the percentage tolerance of -30%
+    else if (ir_left > ir_right*70/100) {
+      tracef("SENSOR_LEFT => IR left  = %i\t IR right = %i(%i)\n", ir_left, ir_right*70/100, ir_right);
+      tower_status = SENSOR_LEFT;
+    }
+    // TODO: Check the percentage tolerance of -30%
+    else if (ir_right > ir_left*70/100) {
+      tracef("SENSOR_RIGHT => IR right  = %i\t IR left = %i\n", ir_right, ir_left*70/100, ir_left);
+      tower_status = SENSOR_RIGHT;
+    }
+    else {
+      tower_status = SENSOR_BOTH;
+    }
+    vTaskDelay(10);
+  }
+}

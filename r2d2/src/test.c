@@ -55,7 +55,7 @@ static void test_motor(void *pvParameters) {
     if (digital_get_dip(DD_DIP4) == DD_DIP_ON) {
         speeds[0] = 0;
         speeds[1] = 0;
-        accelerator(motors, speeds, array_size, false);
+        accelerator(motors, speeds, array_size);
         while (digital_get_dip(DD_DIP4) == DD_DIP_ON) {
           vTaskDelay(200);
         }
@@ -63,11 +63,11 @@ static void test_motor(void *pvParameters) {
 
     speeds[0] = 90;
     speeds[1] = -90;
-    accelerator(motors, speeds, array_size, false);
+    accelerator(motors, speeds, array_size);
     vTaskDelay(200);
     speeds[0] = -90;
     speeds[1] = 90;
-    accelerator(motors, speeds, array_size, false);
+    accelerator(motors, speeds, array_size);
 
     vTaskDelay(200);
   }

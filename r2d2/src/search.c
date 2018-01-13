@@ -1,6 +1,5 @@
 #include <stdlib.h>
 #include <stdint.h>
-#include <stdbool.h>
 #include "dorobo32.h"
 #include "FreeRTOS.h"
 #include "task.h"
@@ -30,7 +29,7 @@ enum SENSOR_STATUS
 volatile enum SENSOR_STATUS hit_status;
 volatile enum SENSOR_STATUS dist_status;
 volatile enum SENSOR_STATUS tower_status;
-volatile _Bool cancel_acc;
+volatile uint8_t cancel_acc;
 
 void search(){
 
@@ -45,10 +44,7 @@ void search(){
 
 static void control_motors(void *pvParameters){
 
-  //The order of the motors is: DM_MOTOR0 as left motor,
-  //DM_MOTOR1 as right motor and DM_MOTOR2 as back motor.
-
-  // TODO: Increase velocity.
+    // TODO: Increase velocity.
   int8_t drive_fwd[] = {60,-60,0};
   int8_t drive_fwd_left[] = {30,-60,-30};
   int8_t drive_fwd_right[] = {60,-30,30};
@@ -61,54 +57,45 @@ static void control_motors(void *pvParameters){
   int8_t drive_bwd_left[] = {-30,60,30};
   int8_t drive_bwd_right[] = {-60,30,-30};
 
-  while(true){
-
+  while(1){
     // If DIP switch 4 is on after reset, the motors are stopped.
     if (digital_get_dip(DD_DIP4) == DD_DIP_ON) {
       int8_t drive_stop[] = {0, 0, 0};
-      accelerator3(drive_stop, false);
+      move(drive_stop, 0);
       while (digital_get_dip(DD_DIP4) == DD_DIP_ON) {
        vTaskDelay(200);
       }
     }
 
     // Control HIT behavior first.
-    if (hit_status != SENSOR_NONE)
-    {
-      if(hit_status == SENSOR_LEFT)
-      {
-        accelerator3(drive_bwd_left, false);
+    if (hit_status != SENSOR_NONE) {
+      if(hit_status == SENSOR_LEFT)  {
+        move(drive_bwd_left, 0);
       }
-      else if (hit_status == SENSOR_RIGHT)
-      {
-        accelerator3(drive_bwd_left, false);
+      else if (hit_status == SENSOR_RIGHT){
+        move(drive_bwd_left, 0);
       }
-      else if (hit_status == SENSOR_BOTH)
-      {
-        accelerator3(drive_bwd, false);
+      else if (hit_status == SENSOR_BOTH){
+        move(drive_bwd, 0);
       }
       // Time to go back far enough to get rid of the obstacle.
       // TODO: Check this delay.
       vTaskDelay(100);
     }
-    else if (dist_status == SENSOR_LEFT) // Control safe distance.
-    {
-      accelerator3(drive_fwd_right_slow, (_Bool*)&cancel_acc);
+    else if (dist_status == SENSOR_LEFT){ // Control safe distance.
+      move(drive_fwd_right_slow, cancel_acc);
     }
-    else if (dist_status == SENSOR_RIGHT)
-    {
-      accelerator3(drive_fwd_left_slow, (_Bool*)&cancel_acc);
+    else if (dist_status == SENSOR_RIGHT){
+      move(drive_fwd_left_slow, cancel_acc);
     }
-    else if (tower_status == SENSOR_LEFT) // Control TOWER target.
-    {
-      accelerator3(drive_fwd_left, (_Bool*)&cancel_acc);
+    else if (tower_status == SENSOR_LEFT){ // Control TOWER target.
+      move(drive_fwd_left, cancel_acc);
     }
-    else if (tower_status == SENSOR_RIGHT)
-    {
-      accelerator3(drive_fwd_right, (_Bool*)&cancel_acc);
+    else if (tower_status == SENSOR_RIGHT){
+      move(drive_fwd_right, cancel_acc);
     }
     else {
-      accelerator3(drive_fwd, (_Bool*)&cancel_acc);
+      move(drive_fwd, cancel_acc);
     }
   }
 }
@@ -118,10 +105,10 @@ static void watch_hit(void *pvParameters) {
   digital_configure_pin( DD_PIN_PC13, DD_CFG_INPUT_PULLUP);
   digital_configure_pin( DD_PIN_PA8, DD_CFG_INPUT_PULLUP);
 
-  _Bool hit_left, hit_right;
+  uint8_t hit_left, hit_right;
 
   //If hit only one side, still checking the other side another time.
-  while (true) {
+  while (1) {
     for (uint8_t i=0; i<2 || (hit_left && hit_right); i++) {
       hit_left  |= !digital_get_pin(DD_PIN_PC13);
       hit_right |= !digital_get_pin(DD_PIN_PA8);
@@ -141,10 +128,11 @@ static void watch_hit(void *pvParameters) {
       hit_status = SENSOR_NONE;
     }
 
-    cancel_acc = (hit_status == SENSOR_NONE) ? 0 : 1;
+    //cancel_acc = (hit_status == SENSOR_NONE) ? 0 : 1;
+    cancel_acc = hit_status != SENSOR_NONE; 
     vTaskDelay(10);
-    hit_left = false;
-    hit_right = false;
+    hit_left = 0;
+    hit_right = 0;
   }
 }
 
@@ -152,7 +140,7 @@ static void watch_distance(void *pvParameters) {
 
   uint32_t dist_left, dist_right;
 
-  while (true) {
+  while (1) {
     // TODO: Check if there are values out of the average
     // If yes a "for loop" would solve the issue.
       dist_left  = adc_get_value(DA_ADC_CHANNEL0);
@@ -182,7 +170,7 @@ static void watch_tower(void *pvParameters){
   digital_configure_pin(DD_PIN_PA15, DD_CFG_INPUT_NOPULL);
   digital_configure_pin(DD_PIN_PF10, DD_CFG_INPUT_NOPULL);
 
-  while (true){
+  while (1){
     ft_start_sampling(DD_PIN_PA15);
       while (!ft_is_sampling_finished());
       ir_left = ft_get_transform (DFT_FREQ100);

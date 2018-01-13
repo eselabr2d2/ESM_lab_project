@@ -1,5 +1,4 @@
 #include <stdlib.h>
-#include <stdbool.h>
 #include "motor.h"
 #include "FreeRTOS.h"
 #include "task.h"
@@ -10,29 +9,30 @@
 
 // TODO: Check the cancel parameter.
 // Function to change the speed of the three motors.
-void accelerator3(int8_t aim_speed[], _Bool *cancel)
+void move(int8_t aim_speed[], uint8_t cancel)
 {
   enum DM_MOTORS_E motors[] = { DM_MOTOR0, DM_MOTOR1, DM_MOTOR2 };
-  accelerator(motors, aim_speed, 3, cancel);
+  accelerator(motors, aim_speed,  3, cancel);
 }
 
-//Function to change the speed of the motors depending on the size of the array.
-void accelerator(enum DM_MOTORS_E motor[], int8_t aim_speed[], int8_t size, _Bool *cancel)
-{
-  int speed_diff[size];
-  int speed[size];
-  _Bool any_diff = false;
 
-  for(int i = 0; i < size && !(*cancel); i++)
+//Function to change the speed of the motors depending on the size of the array.
+void accelerator(enum DM_MOTORS_E motor[], int8_t aim_speed[], int8_t size, uint8_t cancel)
+{
+  int8_t speed_diff[size];
+  int8_t speed[size];
+  uint8_t any_diff = 0;
+
+  for(uint8_t i = 0; i < size && !cancel; i++)
   {
     speed[i] = motor_get_speed(motor[i]);
     speed_diff[i] = aim_speed[i] - motor_get_speed(motor[i]);
     any_diff = any_diff || (speed_diff[i] != 0);
   }
-  while(any_diff && !(*cancel))
+  while(any_diff && !cancel)
   {
-    any_diff = false;
-    for(int i = 0; i < size; i++)
+    any_diff = 0;
+    for(uint8_t i = 0; i < size; i++)
     {
       if (speed_diff[i] != 0)
       {

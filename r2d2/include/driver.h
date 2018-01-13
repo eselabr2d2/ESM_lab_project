@@ -8,8 +8,8 @@
 #ifndef INCLUDE_DRIVER_H_
 #define INCLUDE_DRIVER_H_
 
-void accelerator3(int8_t aim_speed[], _Bool *cancel);
+void move(int8_t aim_speed[], uint8_t cancel);
 
-void accelerator(enum DM_MOTORS_E motor[], int8_t aim_speed[], int8_t size, _Bool *cancel);
+void accelerator(enum DM_MOTORS_E motor[], int8_t aim_speed[], int8_t size, uint8_t  cancel);
 
 #endif /* INCLUDE_DRIVER_H_ */

@@ -19,8 +19,8 @@ static void test_ir(void *pvParameters);
 void test() {
 
   xTaskCreate(test_blink, "BLINKTASK", 128, NULL, 1, NULL);
-  xTaskCreate(test_motor, "MOTORTASK", 128, NULL, 1, NULL);
-  xTaskCreate(test_hit, "HITTASK", 128, NULL, 1, NULL);
+//  xTaskCreate(test_motor, "MOTORTASK", 128, NULL, 1, NULL);
+  xTaskCreate(test_hit, "HITTASK", 128, NULL, 2, NULL);
   xTaskCreate(test_distance, "TASK", 128, NULL, 1, NULL);
   xTaskCreate(test_ir, "IRTASK", 128, NULL, 1, NULL);
 
@@ -60,7 +60,7 @@ static void test_motor(void *pvParameters) {
           vTaskDelay(200);
         }
     }
-
+/*
     speeds[0] = 90;
     speeds[1] = -90;
     accelerator(motors, speeds, array_size);
@@ -68,7 +68,7 @@ static void test_motor(void *pvParameters) {
     speeds[0] = -90;
     speeds[1] = 90;
     accelerator(motors, speeds, array_size);
-
+*/
     vTaskDelay(200);
   }
 
@@ -83,8 +83,8 @@ static void test_hit(void *pvParameters) {
   DD_PINLEVEL_T hit_left, hit_right;
 
   while (1) {
-    hit_left  = digital_get_pin(DD_PIN_PC13);
-    hit_right = digital_get_pin(DD_PIN_PA8);
+    hit_left  = !digital_get_pin(DD_PIN_PC13);
+    hit_right = !digital_get_pin(DD_PIN_PA8);
 
     tracef("Hit left  = %i\t Hit right = %i\n", hit_left, hit_right);
 

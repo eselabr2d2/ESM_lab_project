@@ -43,8 +43,8 @@ static void control_motors(void *pvParameters){
   int8_t drive_fwd_right_slow[] = {30,-10,10};
 
   int8_t drive_bwd[] = {-60,60,0};
-  int8_t drive_bwd_left[] = {-30,60,30};
-  int8_t drive_bwd_right[] = {-60,30,-30};
+  int8_t drive_bwd_left[] = {-30,60,-30};
+  int8_t drive_bwd_right[] = {-60,30,30};
 
   while(1){
     // If DIP switch 4 is on after reset, the motors are stopped.
@@ -105,8 +105,8 @@ static void watch_hit(void *pvParameters) {
   while (1) {
       // reading pins will not be a huge
       // waste of energy, compared to motors
-    hit_left = digital_get_pin(DD_PIN_PC13);
-    hit_right = digital_get_pin(DD_PIN_PA8);
+    hit_left = !digital_get_pin(DD_PIN_PC13);
+    hit_right = !digital_get_pin(DD_PIN_PA8);
 
    vTaskDelay(10); 
 
@@ -135,8 +135,7 @@ static void watch_distance(void *pvParameters) {
     // If yes a "for loop" would solve the issue.
      // the delay at the end solved the inestability
       dist_left  = adc_get_value(DA_ADC_CHANNEL0);
-      dist_right = adc_get_value(DA_ADC_CHANNEL1);
-
+      dist_right = adc_get_value(DA_ADC_CHANNEL1); 
     //For simplification: If both sensors surpass the threshold,
     //the left sensor has priority.
     if (dist_left > DIST_THR) {

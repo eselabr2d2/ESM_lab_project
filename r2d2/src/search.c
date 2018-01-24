@@ -1,7 +1,9 @@
 #include "search.h"
+#include "FreeRTOS.h"
 
 // TODO: Refine the threshold.
-#define DIST_THR 1100
+#define DIST_THR_LEFT 1500//1100
+#define DIST_THR_RIGHT 700//550
 
 static void control_motors(void *pvParameters);
 static void watch_hit(void *pvParameters);
@@ -36,15 +38,15 @@ static void control_motors(void *pvParameters){
 
     // TODO: Increase velocity.
   int8_t drive_fwd[] = {60,-60,0};
-  int8_t drive_fwd_left[] = {30,-60,-30};
-  int8_t drive_fwd_right[] = {60,-30,30};
+  int8_t drive_fwd_left[] = {50,-70,0};
+  int8_t drive_fwd_right[] = {70,-50,0};
 
-  int8_t drive_fwd_left_slow[] = {10,-30,-10};
-  int8_t drive_fwd_right_slow[] = {30,-10,10};
+  int8_t drive_fwd_left_slow[] = {10,-50,-30};
+  int8_t drive_fwd_right_slow[] = {50,-10,30};
 
-  int8_t drive_bwd[] = {-60,60,0};
-  int8_t drive_bwd_left[] = {-30,60,-30};
-  int8_t drive_bwd_right[] = {-60,30,30};
+  int8_t drive_bwd[] = {-70,70,0};
+  int8_t drive_bwd_left[] = {-50,60,10};
+  int8_t drive_bwd_right[] = {-60,50,-10};
 
   while(1){
     // If DIP switch 4 is on after reset, the motors are stopped.
@@ -64,9 +66,11 @@ static void control_motors(void *pvParameters){
     switch (hit_status){
         case SENSOR_LEFT:
             move(drive_bwd_left);
+            vTaskDelay(150);
             break;
         case SENSOR_RIGHT:
             move(drive_bwd_right);
+            vTaskDelay(150);
             break;
         case SENSOR_BOTH:
             move(drive_bwd);
@@ -135,13 +139,14 @@ static void watch_distance(void *pvParameters) {
     // If yes a "for loop" would solve the issue.
      // the delay at the end solved the inestability
       dist_left  = adc_get_value(DA_ADC_CHANNEL0);
-      dist_right = adc_get_value(DA_ADC_CHANNEL1); 
+      dist_right = adc_get_value(DA_ADC_CHANNEL1);
+
     //For simplification: If both sensors surpass the threshold,
     //the left sensor has priority.
-    if (dist_left > DIST_THR) {
+    if (dist_left > DIST_THR_LEFT) {
       dist_status = SENSOR_LEFT;
     }
-    else if (dist_right > DIST_THR) {
+    else if (dist_right > DIST_THR_RIGHT) {
       dist_status = SENSOR_RIGHT;
     }
     else {

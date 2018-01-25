@@ -1,3 +1,6 @@
+/* ------------------------------------------- */
+/*   INCLUDES                                  */
+/* ------------------------------------------- */
 #include <stdlib.h>
 #include <stdbool.h>
 #include "dorobo32.h"
@@ -10,12 +13,18 @@
 #include "driver.h"
 #include "test.h"
 
+/* ------------------------------------------- */
+/*   PRIVATE FUNCTIONS DECLARATIONS            */
+/* ------------------------------------------- */
 static void test_blink(void *pvParameters);
 static void test_motor(void *pvParameters);
 static void test_hit(void *pvParameters);
 static void test_distance(void *pvParameters);
 static void test_ir(void *pvParameters);
 
+/* ------------------------------------------- */
+/*   PUBLIC FUNCTIONS                          */
+/* ------------------------------------------- */
 void test() {
 
   xTaskCreate(test_blink, "BLINKTASK", 128, NULL, 1, NULL);
@@ -25,9 +34,11 @@ void test() {
   xTaskCreate(test_ir, "IRTASK", 128, NULL, 1, NULL);
 
   vTaskStartScheduler();  //start the freeRTOS scheduler
-  //should not be reached!
 }
 
+/* ------------------------------------------- */
+/*   PRIVATE FUNCTIONS DEFINITIONS             */
+/* ------------------------------------------- */
 static void test_blink(void *pvParameters) {
 
   while(1) {

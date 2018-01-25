@@ -1,3 +1,6 @@
+/* ------------------------------------------- */
+/*   INCLUDES AND DEFINES                      */
+/* ------------------------------------------- */
 #include "search.h"
 #include "FreeRTOS.h"
 
@@ -5,11 +8,18 @@
 #define DIST_THR_LEFT 1500//1100
 #define DIST_THR_RIGHT 700//550
 
+/* ------------------------------------------- */
+/*   PRIVATE FUNCTIONS DECLARATIONS            */
+/* ------------------------------------------- */
 static void control_motors(void *pvParameters);
 static void watch_hit(void *pvParameters);
 static void watch_distance(void *pvParameters);
 static void watch_tower(void *pvParameters);
 
+/* ------------------------------------------- */
+/*   GLOBAL VARIABLES                          */
+/*   For data communication between threads    */
+/* ------------------------------------------- */
 enum SENSOR_STATUS
 {
   SENSOR_NONE,
@@ -22,7 +32,9 @@ volatile enum SENSOR_STATUS hit_status = SENSOR_NONE;
 volatile enum SENSOR_STATUS dist_status;
 volatile enum SENSOR_STATUS tower_status;
 
-
+/* ------------------------------------------- */
+/*   PUBLIC FUNCTIONS                          */
+/* ------------------------------------------- */
 void search(){
 
   xTaskCreate(control_motors, "CONTROLMOTORS", 128, NULL, 1, NULL);
@@ -96,6 +108,14 @@ static void control_motors(void *pvParameters){
   }
 }
 
+/* ------------------------------------------- */
+/*   PRIVATE FUNCTIONS DEFINITIONS             */
+/* ------------------------------------------- */
+
+/**
+    watch_hit: 
+        read digital switches 
+*/
 static void watch_hit(void *pvParameters) {
 
   digital_configure_pin( DD_PIN_PC13, DD_CFG_INPUT_PULLUP);
@@ -125,6 +145,12 @@ static void watch_hit(void *pvParameters) {
   }
 }
 
+/**
+    watch_distance: 
+        read distance sensors and analyze
+        if there is an obstacle and in 
+        which direction
+*/
 static void watch_distance(void *pvParameters) {
 
   uint32_t dist_left, dist_right;
@@ -149,6 +175,11 @@ static void watch_distance(void *pvParameters) {
   }
 }
 
+/**
+    watch_tower: 
+        check if we detect the signal from
+        the tower
+*/
 static void watch_tower(void *pvParameters){
 
   // TODO: Change the names for the similar variables in test.c

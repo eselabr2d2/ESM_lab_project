@@ -5,7 +5,7 @@
  * Functions for searching the tower.
  *
  * @author
- * Group 10 - Daniel Zevallos, Pedro Oliveira.
+ * Group 10 - Daniel Paredes, Pedro Oliveira.
  */
 #ifndef _SEARCH_H_
 #define _SEARCH_H_

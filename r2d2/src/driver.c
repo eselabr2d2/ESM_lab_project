@@ -1,8 +1,17 @@
+/* ------------------------------------------- */
+/*   INCLUDES AND DEFINES                      */
+/* ------------------------------------------- */
 #include "driver.h"
 
 // TODO: Check the step and its delay.
 #define STEP 5
 #define STEP_DELAY 10
+
+/* ------------------------------------------- */
+/*   FUNCTION DEFINITIONS - driver.h           */
+/*      full description of the function in    */
+/*      driver.h                               */
+/* ------------------------------------------- */
 
 //Function to change the speed of the motors depending on the size of the array.
 void accelerator(enum DM_MOTORS_E motor[], int8_t aim_speed[], int8_t size) 

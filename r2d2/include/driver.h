@@ -2,10 +2,10 @@
  * @file
  * driver.h
  *
- * Functions for driving the motor.
+ * Functions of the motor driver.
  *
  * @author
- * Group 10 - Daniel Zevallos, Pedro Oliveira.
+ * Group 10 - Daniel Paredes, Pedro Oliveira.
  */
 #ifndef _DRIVER_H_
 #define _DRIVER_H_

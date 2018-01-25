@@ -22,6 +22,7 @@ volatile enum SENSOR_STATUS hit_status = SENSOR_NONE;
 volatile enum SENSOR_STATUS dist_status;
 volatile enum SENSOR_STATUS tower_status;
 
+
 void search(){
 
   xTaskCreate(control_motors, "CONTROLMOTORS", 128, NULL, 1, NULL);
@@ -49,7 +50,7 @@ static void control_motors(void *pvParameters){
   int8_t drive_bwd_right[] = {-60,50,-10};
 
   while(1){
-    // If DIP switch 4 is on after reset, the motors are stopped.
+    // If DIP switch 4 is on the motors are stopped.
     if (digital_get_dip(DD_DIP4) == DD_DIP_ON) {
       move(drive_stop);
       while (digital_get_dip(DD_DIP4) == DD_DIP_ON) {
@@ -57,12 +58,9 @@ static void control_motors(void *pvParameters){
       }
     }
 
-    // The code is way faster than any analog sensor
-    // no need for a cancel movement variable
-    // the function move it's executed one and it's fast
-    // compared to the speed of physical objects
-    // one it reaches one hit the code will catch it
-    // Control HIT behavior first.
+    //The control flow below verify which movement the robot should perform.
+    //Analyzing, in order of priority, the following status:
+    //hit_status, dist_status, tower_status.
     switch (hit_status){
         case SENSOR_LEFT:
             move(drive_bwd_left);
@@ -105,10 +103,7 @@ static void watch_hit(void *pvParameters) {
 
   uint8_t hit_left, hit_right;
 
-  //If hit only one side, still checking the other side another time.
   while (1) {
-      // reading pins will not be a huge
-      // waste of energy, compared to motors
     hit_left = !digital_get_pin(DD_PIN_PC13);
     hit_right = !digital_get_pin(DD_PIN_PA8);
 
@@ -135,9 +130,6 @@ static void watch_distance(void *pvParameters) {
   uint32_t dist_left, dist_right;
 
   while (1) {
-    // TODO: Check if there are values out of the average
-    // If yes a "for loop" would solve the issue.
-     // the delay at the end solved the inestability
       dist_left  = adc_get_value(DA_ADC_CHANNEL0);
       dist_right = adc_get_value(DA_ADC_CHANNEL1);
 

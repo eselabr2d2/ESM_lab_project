@@ -1,8 +1,11 @@
-/*
+/**
+ * @file
  * search.h
  *
- *   Functions for searching the tower
- *      Authors: Group 10
+ * Functions for searching the tower.
+ *
+ * @author
+ * Group 10 - Daniel Zevallos, Pedro Oliveira.
  */
 #ifndef _SEARCH_H_
 #define _SEARCH_H_
@@ -13,6 +16,12 @@
 #include "fft.h"
 #include "driver.h"
 
+/**
+ * @brief   Searches the tower.
+ *
+ * Searches the tower through a set of internal tasks that analyze the sensors
+ * and switches.
+ */
 void search();
 
-#endif /* INCLUDE_SEARCH_H_ */
+#endif /* _SEARCH_H_ */

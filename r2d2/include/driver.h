@@ -1,10 +1,12 @@
-/*
+/**
+ * @file
  * driver.h
  *
- *  Functions for driving the motor
- *      Authors: Group 10
+ * Functions for driving the motor.
+ *
+ * @author
+ * Group 10 - Daniel Zevallos, Pedro Oliveira.
  */
-
 #ifndef _DRIVER_H_
 #define _DRIVER_H_
 
@@ -14,7 +16,26 @@
 #include "motor.h"
 #include "task.h"
 
+/**
+ * @brief   Changes the speed of the chosen motors.
+ *
+ * @param   motor
+ *          Chosen motors.
+ *
+ * @param   aim_speed
+ *          Intended speed of the motors.
+ *
+ * @param   size
+ *          Size of the motor and aim_speed arrays (max. 3).
+ */
 void accelerator(enum DM_MOTORS_E motor[], int8_t aim_speed[], int8_t size);
-void move(int8_t aim_speed[]);
 
-#endif /* INCLUDE_DRIVER_H_ */
+/**
+ * @brief   Moves the robot by changing the speed of the three motors.
+ *
+ * @param   aim_speed
+ *          The speed of the motors 0, 1 and 2.
+ */
+void move(int8_t aim_speed[3]);
+
+#endif /* _DRIVER_H_ */

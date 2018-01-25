@@ -48,10 +48,8 @@ void accelerator(enum DM_MOTORS_E motor[], int8_t aim_speed[], int8_t size)
    }
 }
 
-
-// TODO: Check the stopMotor parameter.
 // Function to change the speed of the three motors.
-void move(int8_t aim_speed[]){
+void move(int8_t aim_speed[3]){
   enum DM_MOTORS_E motors[] = { DM_MOTOR0, DM_MOTOR1, DM_MOTOR2 };
   accelerator(motors, aim_speed,  3);
 }

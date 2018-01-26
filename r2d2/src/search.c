@@ -238,13 +238,15 @@ static void watch_tower(void *pvParameters){
     }
     // TODO: Check the percentage tolerance of -40%
     else if (ir_left*60/100 > ir_right) {
-      tracef("SENSOR_LEFT => IR left  = %i\t IR right = %i(%i)\n", ir_left, ir_right*70/100, ir_right);
+      tracef("SENSOR_LEFT => IR left (60%%)  = %i\t IR right = %i(%i)\n",
+          ir_left*60/100, ir_right, ir_right);
       tower_status = SENSOR_LEFT;
       led_red(DD_LED_ON);
     }
     // TODO: Check the percentage tolerance of -40%
     else if (ir_right*60/100 > ir_left) {
-      tracef("SENSOR_RIGHT => IR right  = %i\t IR left = %i\n", ir_right, ir_left*70/100, ir_left);
+      tracef("SENSOR_RIGHT => IR right (60%%)  = %i\t IR left = %i\n",
+          ir_right*60/100, ir_left, ir_left);
       tower_status = SENSOR_RIGHT;
       led_green(DD_LED_ON);
     }

@@ -29,8 +29,8 @@ enum SENSOR_STATUS
 };
 
 volatile enum SENSOR_STATUS hit_status = SENSOR_NONE;
-volatile enum SENSOR_STATUS dist_status;
-volatile enum SENSOR_STATUS tower_status;
+volatile enum SENSOR_STATUS dist_status = SENSOR_NONE;
+volatile enum SENSOR_STATUS tower_status = SENSOR_NONE;
 
 /* ------------------------------------------- */
 /*   PUBLIC FUNCTIONS                          */
@@ -51,15 +51,21 @@ static void control_motors(void *pvParameters){
 
     // TODO: Increase velocity.
   int8_t drive_fwd[] = {60,-60,0};
-  int8_t drive_fwd_left[] = {50,-70,0};
-  int8_t drive_fwd_right[] = {70,-50,0};
+  int8_t drive_fwd_left[] = {45,-65,-10};
+  int8_t drive_fwd_right[] = {65,-45,10};
 
-  int8_t drive_fwd_left_slow[] = {10,-50,-30};
-  int8_t drive_fwd_right_slow[] = {50,-10,30};
+  int8_t drive_fwd_slow[] = {50,-50,0};
+  int8_t drive_fwd_left_slow[] = {10,-40,-30};
+  int8_t drive_fwd_right_slow[] = {40,-10,30};
 
-  int8_t drive_bwd[] = {-70,70,0};
-  int8_t drive_bwd_left[] = {-50,60,10};
-  int8_t drive_bwd_right[] = {-60,50,-10};
+  int8_t drive_bwd[] = {-50,50,0};
+  int8_t drive_bwd_left[] = {-10,50,20};
+  int8_t drive_bwd_right[] = {-50,10,-20};
+
+  int8_t drive_rotate_right[] = {40,40,40};
+
+  uint8_t stuck_counter = 0;
+
 
   while(1){
     // If DIP switch 4 is on the motors are stopped.
@@ -70,40 +76,68 @@ static void control_motors(void *pvParameters){
       }
     }
 
-    //The control flow below verify which movement the robot should perform.
-    //Analyzing, in order of priority, the following status:
-    //hit_status, dist_status, tower_status.
-    switch (hit_status){
+    //TODO: Check the stuck counter limit.
+    if (stuck_counter <= 64)
+    {
+      //The control flow below verify which movement the robot should perform.
+      //Analyzing, in order of priority, the following status:
+      //hit_status, dist_status, tower_status.
+      switch (hit_status){
         case SENSOR_LEFT:
-            move(drive_bwd_left);
-            vTaskDelay(150);
-            break;
+          move(drive_bwd_left);
+          stuck_counter++;
+          vTaskDelay(120);
+          break;
         case SENSOR_RIGHT:
-            move(drive_bwd_right);
-            vTaskDelay(150);
-            break;
+          move(drive_bwd_right);
+          stuck_counter++;
+          vTaskDelay(120);
+          break;
         case SENSOR_BOTH:
-            move(drive_bwd);
-            // Time to go back far enough to get rid of the obstacle.
-            // TODO: Check this delay. 
-            vTaskDelay(100);
-            break;
+          move(drive_bwd);
+          stuck_counter++;
+          // Time to go back far enough to get rid of the obstacle.
+          // TODO: Check this delay.
+          vTaskDelay(120);
+          break;
         default:
-            if (dist_status == SENSOR_LEFT){ // Control safe distance.
-              move(drive_fwd_right_slow);
-            }
-            else if (dist_status == SENSOR_RIGHT){
-              move(drive_fwd_left_slow);
-            }
-            else if (tower_status == SENSOR_LEFT){ // Control TOWER target.
-              move(drive_fwd_left);
-            }
-            else if (tower_status == SENSOR_RIGHT){
-              move(drive_fwd_right);
-            }
-            else {
-              move(drive_fwd);
-            }
+          if (dist_status == SENSOR_LEFT){ // Control safe distance.
+            move(drive_fwd_right_slow);
+            stuck_counter++;
+          }
+          else if (dist_status == SENSOR_RIGHT){
+            move(drive_fwd_left_slow);
+            stuck_counter++;
+          }
+          else if (tower_status == SENSOR_LEFT){ // Control TOWER target.
+            move(drive_fwd_left);
+            stuck_counter=0;
+          }
+          else if (tower_status == SENSOR_RIGHT){
+            move(drive_fwd_right);
+            stuck_counter=0;
+          }
+          else if (tower_status == SENSOR_BOTH){
+            move(drive_fwd);
+            stuck_counter=0;
+          }
+          else {
+            move(drive_fwd_slow);
+            stuck_counter=0;
+          }
+          vTaskDelay(10);
+      }
+    }
+    else {
+      move(drive_bwd);
+      vTaskDelay(100);
+      move(drive_stop);
+      vTaskDelay(50);
+      move(drive_rotate_right);
+      // Delay to rotate enough to get out of the stuck situation in the
+      //corners.
+      vTaskDelay(200);
+      stuck_counter=0;
     }
   }
 }
@@ -124,25 +158,25 @@ static void watch_hit(void *pvParameters) {
   uint8_t hit_left, hit_right;
 
   while (1) {
-    hit_left = !digital_get_pin(DD_PIN_PC13);
-    hit_right = !digital_get_pin(DD_PIN_PA8);
+     hit_left = !digital_get_pin(DD_PIN_PC13);
+     hit_right = !digital_get_pin(DD_PIN_PA8);
 
-   vTaskDelay(10); 
 
-    if (hit_left && hit_right) {
-      hit_status = SENSOR_BOTH;
-    }
-    else if (hit_left) {
-      hit_status = SENSOR_LEFT;
-    }
-    else if (hit_right) {
-      hit_status = SENSOR_RIGHT;
-    }
-    else {
-      hit_status = SENSOR_NONE;
-    }
+     if (hit_left && hit_right) {
+       hit_status = SENSOR_BOTH;
+     }
+     else if (hit_left) {
+       hit_status = SENSOR_LEFT;
+     }
+     else if (hit_right) {
+       hit_status = SENSOR_RIGHT;
+     }
+     else {
+       hit_status = SENSOR_NONE;
+     }
 
-  }
+     vTaskDelay(10);
+   }
 }
 
 /**
@@ -199,19 +233,25 @@ static void watch_tower(void *pvParameters){
 
     if (ir_left==0 && ir_right==0) {
       tower_status = SENSOR_NONE;
+      led_red(DD_LED_OFF);
+      led_green(DD_LED_OFF);
     }
-    // TODO: Check the percentage tolerance of -30%
-    else if (ir_left > ir_right*70/100) {
+    // TODO: Check the percentage tolerance of -40%
+    else if (ir_left*60/100 > ir_right) {
       tracef("SENSOR_LEFT => IR left  = %i\t IR right = %i(%i)\n", ir_left, ir_right*70/100, ir_right);
       tower_status = SENSOR_LEFT;
+      led_red(DD_LED_ON);
     }
-    // TODO: Check the percentage tolerance of -30%
-    else if (ir_right > ir_left*70/100) {
+    // TODO: Check the percentage tolerance of -40%
+    else if (ir_right*60/100 > ir_left) {
       tracef("SENSOR_RIGHT => IR right  = %i\t IR left = %i\n", ir_right, ir_left*70/100, ir_left);
       tower_status = SENSOR_RIGHT;
+      led_green(DD_LED_ON);
     }
     else {
       tower_status = SENSOR_BOTH;
+      led_red(DD_LED_ON);
+      led_green(DD_LED_ON);
     }
     vTaskDelay(10);
   }

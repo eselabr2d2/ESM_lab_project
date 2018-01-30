@@ -55,6 +55,10 @@ static void test_blink(void *pvParameters) {
   }
 }
 
+/**
+ * Function: test_motor
+ * Description: test motor behavior (speed, change speed)
+ * */
 static void test_motor(void *pvParameters) {
 
   int8_t motors_stop[] = {0, 0, 0};
@@ -80,6 +84,10 @@ static void test_motor(void *pvParameters) {
 
 }
 
+/**
+ * Function: test_hit
+ * Description: test micro switches
+ * */
 static void test_hit(void *pvParameters) {
 
   //Micro switches
@@ -99,6 +107,10 @@ static void test_hit(void *pvParameters) {
 
 }
 
+/**
+ * Function: test_distance 
+ * Description: test IR distance sensor
+ * */
 static void test_distance(void *pvParameters) {
 
   uint32_t dist_left, dist_right ;
@@ -113,6 +125,10 @@ static void test_distance(void *pvParameters) {
   }
 }
 
+/**
+ * Function: test_ir 
+ * Description: test IR remote control sensor
+ * */
 static void test_ir(void *pvParameters){
 
   uint16_t ir_left, ir_right;

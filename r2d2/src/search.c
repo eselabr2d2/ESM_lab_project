@@ -5,8 +5,8 @@
 #include "FreeRTOS.h"
 
 // TODO: Refine the threshold.
-#define DIST_THR_LEFT 1500//1100
-#define DIST_THR_RIGHT 700//550
+#define DIST_THR_LEFT 1500
+#define DIST_THR_RIGHT 700
 
 /* ------------------------------------------- */
 /*   PRIVATE FUNCTIONS DECLARATIONS            */
@@ -50,6 +50,7 @@ static void control_motors(void *pvParameters){
   int8_t drive_stop[] = {0, 0, 0};
 
     // TODO: Increase velocity.
+    // Set up speed for different directions
   int8_t drive_fwd[] = {60,-60,0};
   int8_t drive_fwd_left[] = {45,-65,-10};
   int8_t drive_fwd_right[] = {65,-45,10};
@@ -238,15 +239,11 @@ static void watch_tower(void *pvParameters){
     }
     // TODO: Check the percentage tolerance of -40%
     else if (ir_left*60/100 > ir_right) {
-      tracef("SENSOR_LEFT => IR left (60%%)  = %i\t IR right = %i(%i)\n",
-          ir_left*60/100, ir_right, ir_right);
       tower_status = SENSOR_LEFT;
       led_red(DD_LED_ON);
     }
     // TODO: Check the percentage tolerance of -40%
     else if (ir_right*60/100 > ir_left) {
-      tracef("SENSOR_RIGHT => IR right (60%%)  = %i\t IR left = %i\n",
-          ir_right*60/100, ir_left, ir_left);
       tower_status = SENSOR_RIGHT;
       led_green(DD_LED_ON);
     }
